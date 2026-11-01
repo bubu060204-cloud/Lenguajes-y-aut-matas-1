@@ -1,0 +1,9 @@
+.root{
+    -fx-font-size: 18px;
+}
+
+#lbTitulo{
+    -fx-font-weight: bolder;
+    -fx-font-size: 42px;
+}
+

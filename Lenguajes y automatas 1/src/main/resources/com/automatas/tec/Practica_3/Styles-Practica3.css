@@ -1,0 +1,13 @@
+.root{
+    -fx-font-size: 18px;
+}
+
+#lbTitulo{
+    -fx-font-weight: bolder;
+    -fx-font-size: 38px;
+}
+
+#lbSubtitulo1, #lbSubtitulo2{
+    -fx-font-weight: bold;
+    -fx-font-size: 28px;
+}
