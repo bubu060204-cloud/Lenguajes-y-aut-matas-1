@@ -11,8 +11,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import java.net.URL;
-public class ControllerPractica3 implements Initializable{
-    //Declaración de variables para manipulación/definición de datos y personalización de la interfaz
+public class    ControllerPractica3 implements Initializable{
+
     @FXML
     private Button btnIdentificar;
     @FXML
@@ -44,10 +44,9 @@ public class ControllerPractica3 implements Initializable{
     @FXML
     private TextField tfInstruccion;
 
-    //Creación de un ObservableList para actualizar la tabla en tiempo real
+
     private ObservableList<String[]> datosRegistros=FXCollections.observableArrayList();
-    //Creación de arreglo con 51 palabras reservadas de Java
-    //Declarado como Set<String> para mayor optimización en cuanto a búsquedas y final para mantenerlo como constante
+
     private final Set<String> PALABRAS_RESERVADAS=new HashSet<>(Arrays.asList(
             "abstract","assert","boolean","break","byte","case","catch","char","class","const",
             "continue","default","do","double","else","enum","extends","final","finally","float",
@@ -55,6 +54,64 @@ public class ControllerPractica3 implements Initializable{
             "new","package","private","protected","public","return","short","static","strictfp","super",
             "switch","synchronized","this","throw","throws","transient","try","void","volatile","while",
             "String"));
+
+    private int obtenerNumeroToken(String token) {
+
+        String[] palabrasReservadas = {
+                "abstract", "boolean", "break", "byte", "byvalue", "case",
+                "cast", "catch", "char", "class", "const", "continue",
+                "default", "do", "double", "else", "extends", "final",
+                "finally", "float", "for", "future", "generic", "goto",
+                "if", "implements", "import", "inner", "instanceof", "int",
+                "interface", "long", "native", "new", "null", "operator",
+                "outer", "package", "private", "protected", "public", "rest",
+                "return", "short", "static", "super", "switch", "synchronized",
+                "this", "threadsafe", "throw", "transient", "try", "var",
+                "void", "while"
+        };
+
+        for (int i = 0; i < palabrasReservadas.length; i++) {
+            if (token.equals(palabrasReservadas[i])) {
+                return i + 1;
+            }
+        }
+
+        if (token.matches("[a-zA-Z_][a-zA-Z0-9_]*")) {
+            return 57;
+        }
+
+        if (token.matches("-?([0-9])+")) return 58;
+        if (token.matches("-?([0-9])+L?")) return 59;
+        if (token.matches("-?[0-9]*\\.[0-9]+[dD]")) return 60;
+        if (token.matches("-?[0-9]*\\.[0-9]+[fF]")) return 61;
+        if (token.equals("true") || token.equals("false")) return 62;
+        if (token.matches("'.'")) return 63;
+        if (token.startsWith("\"") && token.endsWith("\"")) return 64;
+
+        String[] operadores = {"++", "--", "!", "*", "/", "%", "+", "-", "<", ">", "<=", ">=", "==", "!=", "&&", "||", "?"};
+
+        for (int i = 0; i < operadores.length; i++) {
+            if (token.equals(operadores[i])) {
+                return 65 + i;
+            }
+        }
+
+        if (token.equals("=")) return 82;
+
+        String[] delimitadores = {"(", ")", "{", "}", "[", "]", ";", ",", "."};
+
+        for (int i = 0; i < delimitadores.length; i++) {
+            if (token.equals(delimitadores[i])) {
+                return 83 + i;
+            }
+        }
+
+        if (token.equals("//") || token.startsWith("//")) return 92;
+        if (token.equals("/*")) return 93;
+        if (token.equals("*/")) return 94;
+
+        return -1;
+    }
 
     //Método main para la interfaz gráfica
     @Override
@@ -73,18 +130,17 @@ public class ControllerPractica3 implements Initializable{
     //Método para procesar la instrucción y agregarla a la tabla (sí cumple las reglas)
     @FXML
     private void procesarInstruccion(){
-        //Se obtiene la instrucción del TextField
+
         String instruccion=tfInstruccion.getText();
-        //Se verifica que se haya escrito algo
+
         if(instruccion==null||instruccion.trim().isEmpty()){
-            //De no haber nada, se muestra la alerta y se interrumpe el método
+
             mostrarAlerta("Campo Vacío","Por favor escribe una instrucción de Java.",Alert.AlertType.WARNING);
             return;
         }
-        //Validación de estructura general con caracteres permitidos incluyendo guiones bajos y puntos
-        //Se usa otro método para todo el análisis general
+
         if(!validarCadenaGeneral(instruccion)){
-            //De no cumplir con al menos una condición, el método devuelve false y muestra la alerta
+
             mostrarAlerta("Error de Sintaxis","La instrucción contiene caracteres o símbolos inválidos.",Alert.AlertType.ERROR);
             return;
         }
@@ -96,18 +152,18 @@ public class ControllerPractica3 implements Initializable{
         List<String> delList=new ArrayList<>();
         List<String> comList=new ArrayList<>();
 
-        // Expresión regular para soportar identificadores con "_", llamadas con puntos ".", números y cadenas
+
         String regexToken="//.*|/\\*[\\s\\S]*?\\*/|\"([^\"\\\\]|\\\\.)*\"|'[^']'|\\b[a-zA-Z_][a-zA-Z0-9_]*\\b|\\d+(?:\\.\\d+)?|[+\\-*/%=<>&!]+|[{}()\\[\\];,\\.]";
         Pattern pattern=Pattern.compile(regexToken);
         Matcher matcher=pattern.matcher(instruccion);
         int totalTokens=0;
-        //Ciclo que se repite por cada vez que se haya encontrado una similitud entre la instrucción y la ER general
+
         while(matcher.find()){
             String token=matcher.group();
             totalTokens++;
-            //Comprobaciones para determinar que tipo de "algo" es
+
             if(token.startsWith("//")||token.startsWith("/*")){
-                //De ser identificado y sí no se repite con algo que ya esté en la lista, se agrega el valor a esta
+
                 if(!comList.contains(token))
                     comList.add(token);
             }
@@ -132,35 +188,34 @@ public class ControllerPractica3 implements Initializable{
                     delList.add(token);
             }
         }
-        //Validar que existan tokens detectados
+
         if(prList.isEmpty()&&idList.isEmpty()&&litList.isEmpty()&&opList.isEmpty()&&delList.isEmpty()&&comList.isEmpty()){
-            //De tener todas las listas vacías, significa que no hay tokens y que, por lo tanto, no se escribió nada
+
             mostrarAlerta("Sin Tokens","No se encontraron elementos válidos en la instrucción ingresada.",Alert.AlertType.WARNING);
             return;
         }
-        //Creación del registro agrupando elementos múltiples con comas
+
         String[] registro=new String[]{
                 String.join(", ",prList),String.join(", ",idList),
                 String.join(", ",litList),String.join(", ",opList),
                 String.join(", ",delList),String.join(", ",comList)};
-        //Agregar el arreglo al ObservableList para actualizar en tiempo real la tabla
+
         datosRegistros.add(registro);
-        // Actualizar resultados en taResultados y lbTokens
+
         actualizarResultados(registro,totalTokens);
-        // Limpiar el TextField
+
         tfInstruccion.clear();
     }
 
-    //Método para comprobación general de la cadena ingresada
+
     private boolean validarCadenaGeneral(String cadena){
         String regexValida="^[a-zA-Z0-9_\\s\\+\\-\\*/%=<>!&\\|\\(\\)\\{\\}\\[\\];,\\.\"'/]+$";
-        //Retorna true sí Match encontró una igualdad entre la ER y la cadena
         return cadena.matches(regexValida);
     }
 
-    //Método para mostrar alertas
+
     private void mostrarAlerta(String titulo,String mensaje,Alert.AlertType tipo){
-        //Estructura de la alerta
+
         Alert alerta=new Alert(tipo);
         alerta.setTitle(titulo);
         alerta.setHeaderText(null);
@@ -168,21 +223,40 @@ public class ControllerPractica3 implements Initializable{
         alerta.showAndWait();
     }
 
-    //Método para mostrar los resultados en el TextArea
-    //Los parámetros son el arreglo con los tokens separados por grupos y el total de tokens
-    private void actualizarResultados(String[] registro,int totalTokens){
-        //Creación de la cadena con StringBuilder para mostrarlo correctamente en el TextArea
-        StringBuilder sb=new StringBuilder();
-        sb.append("RESULTADOS DEL ÚLTIMO REGISTRO\n");
-        sb.append("\t1. Palabras Reservadas: ").append(registro[0].isEmpty()?"":registro[0]).append("\n");
-        sb.append("\t2. Identificadores: ").append(registro[1].isEmpty()?"":registro[1]).append("\n");
-        sb.append("\t3. Literales: ").append(registro[2].isEmpty()?"":registro[2]).append("\n");
-        sb.append("\t4. Operadores: ").append(registro[3].isEmpty()?"":registro[3]).append("\n");
-        sb.append("\t5. Delimitadores: ").append(registro[4].isEmpty()?"":registro[4]).append("\n");
-        sb.append("\t6. Comentarios: ").append(registro[5].isEmpty()?"":registro[5]);
+
+    private void actualizarResultados(String[] registro, int totalTokens) {
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("RESULTADOS DEL ÚLTIMO REGISTRO\n\n");
+
+        String[] titulos = {"PALABRAS RESERVADAS", "IDENTIFICADORES", "LITERALES", "OPERADORES", "DELIMITADORES", "COMENTARIOS"};
+
+        for (int i = 0; i < registro.length; i++) {
+
+            sb.append(titulos[i]).append("\n");
+
+            if (!registro[i].isEmpty()) {
+
+                String[] elementos = registro[i].split(", ");
+
+                for (String elemento : elementos) {
+
+                    int numero = obtenerNumeroToken(elemento);
+
+                    if (numero != -1) {
+                        sb.append(numero).append(". ").append(elemento).append("\n");
+                    }
+                }
+            }
+
+            sb.append("\n");
+        }
+
         taResultados.setText(sb.toString());
-        if(lbTokens!=null){
-            lbTokens.setText(""+totalTokens);
+
+        if (lbTokens != null) {
+            lbTokens.setText("" + totalTokens);
         }
     }
 }
